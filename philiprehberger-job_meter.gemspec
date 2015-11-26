@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name = 'philiprehberger-job_meter'
   spec.version = Philiprehberger::JobMeter::VERSION
   spec.authors = ['Philip Rehberger']
-  spec.email = ['philiprehberger@gmail.com']
+  spec.email = ['me@philiprehberger.com']
 
   spec.summary = 'Framework-agnostic background job instrumentation and metrics'
   spec.description = 'Thread-safe instrumentation for background jobs. Record execution ' \
@@ -22,9 +22,7 @@ Gem::Specification.new do |spec|
   spec.metadata['bug_tracker_uri']       = "#{spec.homepage}/issues"
   spec.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.files = Dir.chdir(__dir__) do
-    Dir['{lib}/**/*', 'LICENSE', 'README.md', 'CHANGELOG.md'].reject { |f| File.directory?(f) }
-  end
+  spec.files = Dir['lib/**/*.rb', 'LICENSE', 'README.md', 'CHANGELOG.md']
 
   spec.require_paths = ['lib']
 end
