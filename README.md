@@ -1,7 +1,7 @@
 # philiprehberger-job_meter
 
+[![Tests](https://github.com/philiprehberger/rb-job-meter/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-job-meter/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-job_meter.svg)](https://rubygems.org/gems/philiprehberger-job_meter)
-[![CI](https://github.com/philiprehberger/rb-job-meter/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-job-meter/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-job-meter)](LICENSE)
 
 Framework-agnostic background job instrumentation and metrics for Ruby
