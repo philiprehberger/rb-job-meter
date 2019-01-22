@@ -4,7 +4,7 @@
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-job_meter.svg)](https://rubygems.org/gems/philiprehberger-job_meter)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-job-meter)](LICENSE)
 
-Framework-agnostic background job instrumentation and metrics for Ruby
+Framework-agnostic background job instrumentation and metrics
 
 ## Requirements
 
