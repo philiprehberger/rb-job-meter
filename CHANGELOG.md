@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-04
+
+### Added
+- Time-bucketed trending stats with `.trending(job_class)` returning rolling 1m/5m/15m windows
+- GitHub issue template gem version field
+- Feature request "Alternatives considered" field
+
 ## [0.1.11] - 2026-03-31
 
 ### Added

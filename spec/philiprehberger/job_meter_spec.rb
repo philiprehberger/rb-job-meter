@@ -292,6 +292,51 @@ RSpec.describe Philiprehberger::JobMeter do
     end
   end
 
+  describe '.trending' do
+    it 'returns stats for all three time windows' do
+      described_class.record('TrendJob', duration: 1.0, success: true)
+      result = described_class.trending('TrendJob')
+      expect(result.keys).to contain_exactly(:last_1m, :last_5m, :last_15m)
+    end
+
+    it 'returns zero stats for unknown job class' do
+      result = described_class.trending('UnknownJob')
+      %i[last_1m last_5m last_15m].each do |window|
+        expect(result[window][:total]).to eq(0)
+        expect(result[window][:avg_duration]).to eq(0.0)
+      end
+    end
+
+    it 'includes correct totals within window' do
+      3.times { described_class.record('CountJob', duration: 2.0, success: true) }
+      2.times { described_class.record('CountJob', duration: 1.0, success: false) }
+      result = described_class.trending('CountJob')
+      expect(result[:last_1m][:total]).to eq(5)
+      expect(result[:last_1m][:failed]).to eq(2)
+    end
+
+    it 'calculates average duration within window' do
+      described_class.record('AvgJob', duration: 2.0, success: true)
+      described_class.record('AvgJob', duration: 4.0, success: true)
+      result = described_class.trending('AvgJob')
+      expect(result[:last_1m][:avg_duration]).to eq(3.0)
+    end
+
+    it 'calculates success rate within window' do
+      3.times { described_class.record('RateJob', duration: 1.0, success: true) }
+      described_class.record('RateJob', duration: 1.0, success: false)
+      result = described_class.trending('RateJob')
+      expect(result[:last_1m][:success_rate]).to eq(0.75)
+    end
+
+    it 'is cleared by reset!' do
+      described_class.record('ResetTrendJob', duration: 1.0, success: true)
+      described_class.reset!
+      result = described_class.trending('ResetTrendJob')
+      expect(result[:last_1m][:total]).to eq(0)
+    end
+  end
+
   describe 'many jobs statistics' do
     it 'computes correct stats for a large number of recordings' do
       1000.times do |i|
