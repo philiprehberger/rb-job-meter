@@ -337,6 +337,222 @@ RSpec.describe Philiprehberger::JobMeter do
     end
   end
 
+  describe '.record with tags' do
+    it 'records a job with tags' do
+      described_class.record('SendEmail', duration: 1.0, success: true, tags: { queue: 'default' })
+      result = described_class.stats('SendEmail')
+      expect(result[:total]).to eq(1)
+    end
+
+    it 'records multiple jobs with different tags' do
+      described_class.record('SendEmail', duration: 1.0, success: true, tags: { queue: 'high' })
+      described_class.record('SendEmail', duration: 2.0, success: false, tags: { queue: 'low' })
+      described_class.record('SendEmail', duration: 3.0, success: true, tags: { queue: 'high' })
+
+      result = described_class.stats('SendEmail')
+      expect(result[:total]).to eq(3)
+    end
+
+    it 'defaults to empty tags when none provided' do
+      described_class.record('SendEmail', duration: 1.0, success: true)
+      result = described_class.stats('SendEmail')
+      expect(result[:total]).to eq(1)
+    end
+
+    it 'supports multiple tag keys' do
+      described_class.record('SendEmail', duration: 1.0, success: true, tags: { queue: 'high', env: 'production' })
+      result = described_class.stats('SendEmail', tags: { queue: 'high', env: 'production' })
+      expect(result[:total]).to eq(1)
+    end
+  end
+
+  describe '.stats with tags filtering' do
+    it 'filters by a single tag' do
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'high' })
+      described_class.record('Job', duration: 2.0, success: false, tags: { queue: 'low' })
+      described_class.record('Job', duration: 3.0, success: true, tags: { queue: 'high' })
+
+      result = described_class.stats('Job', tags: { queue: 'high' })
+      expect(result[:total]).to eq(2)
+      expect(result[:avg_duration]).to eq(2.0)
+      expect(result[:success_rate]).to eq(1.0)
+    end
+
+    it 'filters by multiple tags' do
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'high', env: 'prod' })
+      described_class.record('Job', duration: 2.0, success: true, tags: { queue: 'high', env: 'staging' })
+      described_class.record('Job', duration: 3.0, success: false, tags: { queue: 'low', env: 'prod' })
+
+      result = described_class.stats('Job', tags: { queue: 'high', env: 'prod' })
+      expect(result[:total]).to eq(1)
+      expect(result[:avg_duration]).to eq(1.0)
+    end
+
+    it 'returns nil when no records match tags' do
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'high' })
+      result = described_class.stats('Job', tags: { queue: 'nonexistent' })
+      expect(result).to be_nil
+    end
+
+    it 'returns all records when tags filter is empty' do
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'high' })
+      described_class.record('Job', duration: 2.0, success: true, tags: { queue: 'low' })
+
+      result = described_class.stats('Job', tags: {})
+      expect(result[:total]).to eq(2)
+    end
+
+    it 'matches partial tags correctly' do
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'high', env: 'prod', region: 'us' })
+      described_class.record('Job', duration: 2.0, success: true, tags: { queue: 'high', env: 'staging' })
+
+      result = described_class.stats('Job', tags: { queue: 'high' })
+      expect(result[:total]).to eq(2)
+    end
+  end
+
+  describe '.histogram' do
+    it 'distributes durations into buckets' do
+      [0.05, 0.2, 0.3, 0.7, 1.5, 3.0, 6.0].each do |d|
+        described_class.record('HistJob', duration: d, success: true)
+      end
+
+      result = described_class.histogram('HistJob', buckets: [0.1, 0.5, 1.0, 5.0])
+      expect(result['0-0.1']).to eq(1)
+      expect(result['0.1-0.5']).to eq(2)
+      expect(result['0.5-1.0']).to eq(1)
+      expect(result['1.0-5.0']).to eq(2)
+      expect(result['5.0+']).to eq(1)
+    end
+
+    it 'returns nil for unknown job class' do
+      result = described_class.histogram('Unknown', buckets: [1.0, 5.0])
+      expect(result).to be_nil
+    end
+
+    it 'handles all durations in a single bucket' do
+      3.times { described_class.record('SmallJob', duration: 0.01, success: true) }
+
+      result = described_class.histogram('SmallJob', buckets: [0.1, 1.0])
+      expect(result['0-0.1']).to eq(3)
+      expect(result['0.1-1.0']).to eq(0)
+      expect(result['1.0+']).to eq(0)
+    end
+
+    it 'handles all durations above last bucket' do
+      3.times { described_class.record('BigJob', duration: 100.0, success: true) }
+
+      result = described_class.histogram('BigJob', buckets: [1.0, 5.0])
+      expect(result['0-1.0']).to eq(0)
+      expect(result['1.0-5.0']).to eq(0)
+      expect(result['5.0+']).to eq(3)
+    end
+
+    it 'handles a single bucket boundary' do
+      described_class.record('SplitJob', duration: 0.5, success: true)
+      described_class.record('SplitJob', duration: 1.5, success: true)
+
+      result = described_class.histogram('SplitJob', buckets: [1.0])
+      expect(result['0-1.0']).to eq(1)
+      expect(result['1.0+']).to eq(1)
+    end
+
+    it 'sorts unsorted bucket boundaries' do
+      [0.2, 0.8, 3.0].each do |d|
+        described_class.record('SortJob', duration: d, success: true)
+      end
+
+      result = described_class.histogram('SortJob', buckets: [5.0, 0.5, 1.0])
+      expect(result.keys).to eq(['0-0.5', '0.5-1.0', '1.0-5.0', '5.0+'])
+    end
+  end
+
+  describe '.to_prometheus' do
+    it 'returns prometheus formatted output' do
+      described_class.record('ExportJob', duration: 1.0, success: true)
+      described_class.record('ExportJob', duration: 2.0, success: false)
+
+      output = described_class.to_prometheus
+
+      expect(output).to include('# HELP job_duration_seconds')
+      expect(output).to include('# TYPE job_duration_seconds gauge')
+      expect(output).to include('job_duration_seconds_avg{job_class="ExportJob"}')
+      expect(output).to include('job_executions_total{job_class="ExportJob"} 2')
+      expect(output).to include('job_failures_total{job_class="ExportJob"} 1')
+      expect(output).to include('job_success_rate{job_class="ExportJob"}')
+    end
+
+    it 'includes multiple job classes' do
+      described_class.record('JobA', duration: 1.0, success: true)
+      described_class.record('JobB', duration: 2.0, success: true)
+
+      output = described_class.to_prometheus
+
+      expect(output).to include('job_class="JobA"')
+      expect(output).to include('job_class="JobB"')
+    end
+
+    it 'returns only a newline when no jobs recorded' do
+      output = described_class.to_prometheus
+      expect(output).to eq("\n")
+    end
+
+    it 'includes percentile metrics' do
+      described_class.record('PctJob', duration: 1.0, success: true)
+
+      output = described_class.to_prometheus
+
+      expect(output).to include('job_duration_seconds_p50{job_class="PctJob"}')
+      expect(output).to include('job_duration_seconds_p95{job_class="PctJob"}')
+      expect(output).to include('job_duration_seconds_p99{job_class="PctJob"}')
+    end
+  end
+
+  describe '.to_json_export' do
+    it 'returns valid JSON' do
+      described_class.record('JsonJob', duration: 1.5, success: true)
+
+      output = described_class.to_json_export
+      parsed = JSON.parse(output)
+
+      expect(parsed).to have_key('jobs')
+      expect(parsed['jobs'].length).to eq(1)
+      expect(parsed['jobs'].first['job_class']).to eq('JsonJob')
+    end
+
+    it 'includes stats in export' do
+      described_class.record('StatsExport', duration: 2.0, success: true)
+      described_class.record('StatsExport', duration: 4.0, success: false)
+
+      output = described_class.to_json_export
+      parsed = JSON.parse(output)
+      job = parsed['jobs'].first
+
+      expect(job['stats']['avg_duration']).to eq(3.0)
+      expect(job['stats']['total']).to eq(2)
+      expect(job['stats']['failed']).to eq(1)
+      expect(job['stats']['success_rate']).to eq(0.5)
+    end
+
+    it 'includes multiple job classes' do
+      described_class.record('JsonA', duration: 1.0, success: true)
+      described_class.record('JsonB', duration: 2.0, success: false)
+
+      output = described_class.to_json_export
+      parsed = JSON.parse(output)
+
+      job_names = parsed['jobs'].map { |j| j['job_class'] }
+      expect(job_names).to include('JsonA', 'JsonB')
+    end
+
+    it 'returns empty jobs array when no jobs recorded' do
+      output = described_class.to_json_export
+      parsed = JSON.parse(output)
+
+      expect(parsed['jobs']).to eq([])
+    end
+  end
+
   describe 'many jobs statistics' do
     it 'computes correct stats for a large number of recordings' do
       1000.times do |i|

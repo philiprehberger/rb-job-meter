@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'json'
 require 'philiprehberger/job_meter'
 
 RSpec.configure do |config|
