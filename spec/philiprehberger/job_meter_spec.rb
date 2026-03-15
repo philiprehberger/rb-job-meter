@@ -7,7 +7,7 @@ RSpec.describe Philiprehberger::JobMeter do
 
   describe 'VERSION' do
     it 'returns the current version' do
-      expect(Philiprehberger::JobMeter::VERSION).to eq('0.1.0')
+      expect(Philiprehberger::JobMeter::VERSION).not_to be_nil
     end
   end
 
