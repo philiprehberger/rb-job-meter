@@ -2,10 +2,15 @@
 
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-job_meter.svg)](https://rubygems.org/gems/philiprehberger-job_meter)
 [![CI](https://github.com/philiprehberger/rb-job-meter/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-job-meter/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/philiprehberger/rb-job-meter)](LICENSE)
 
 Framework-agnostic background job instrumentation and metrics for Ruby.
 
 Record execution duration and success/failure for any background job system, compute percentiles (p50, p95, p99), and identify your slowest or most-failing job classes.
+
+## Requirements
+
+- Ruby >= 3.1
 
 ## Installation
 
