@@ -4,9 +4,7 @@
 [![CI](https://github.com/philiprehberger/rb-job-meter/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-job-meter/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-job-meter)](LICENSE)
 
-Framework-agnostic background job instrumentation and metrics for Ruby.
-
-Record execution duration and success/failure for any background job system, compute percentiles (p50, p95, p99), and identify your slowest or most-failing job classes.
+Framework-agnostic background job instrumentation and metrics for Ruby
 
 ## Requirements
 
@@ -22,7 +20,7 @@ gem 'philiprehberger-job_meter'
 
 Or install directly:
 
-```sh
+```bash
 gem install philiprehberger-job_meter
 ```
 
@@ -77,12 +75,12 @@ Clears all recorded metrics.
 
 ## Development
 
-```sh
+```bash
 bundle install
-bundle exec rake spec
-bundle exec rake rubocop
+bundle exec rspec
+bundle exec rubocop
 ```
 
 ## License
 
-Released under the [MIT License](LICENSE).
+MIT
