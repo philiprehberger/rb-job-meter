@@ -26,28 +26,45 @@ gem install philiprehberger-job_meter
 
 ## Usage
 
+Record job executions anywhere in your application:
+
 ```ruby
 require "philiprehberger/job_meter"
 
-# Record job executions
 Philiprehberger::JobMeter.record("SendEmailJob", duration: 1.23, success: true)
 Philiprehberger::JobMeter.record("SendEmailJob", duration: 0.87, success: false)
 Philiprehberger::JobMeter.record("ImportCsvJob", duration: 45.6, success: true)
+```
 
-# Get stats for a specific job class
+### Querying Stats
+
+Retrieve computed metrics for a specific job class. Returns `nil` if no data has been recorded for that class.
+
+```ruby
 stats = Philiprehberger::JobMeter.stats("SendEmailJob")
 # => { avg_duration: 1.05, p50_duration: 1.05, p95_duration: 1.212,
 #      p99_duration: 1.2264, success_rate: 0.5, total: 2, failed: 1 }
+```
 
-# Find slowest jobs by average duration
+### Top Slowest and Failing
+
+Surface the most problematic jobs without inspecting every class individually. Both methods accept an optional limit (default: 5).
+
+```ruby
+# Ranked by slowest average duration (descending)
 Philiprehberger::JobMeter.top_slowest(5)
 # => [{ job_class: "ImportCsvJob", avg_duration: 45.6, ... }, ...]
 
-# Find jobs with highest failure rates
+# Ranked by lowest success rate (ascending)
 Philiprehberger::JobMeter.top_failing(5)
 # => [{ job_class: "SendEmailJob", success_rate: 0.5, ... }, ...]
+```
 
-# Clear all recorded metrics
+### Reset
+
+Clear all recorded metrics from memory. Useful between test runs or when rotating collection windows.
+
+```ruby
 Philiprehberger::JobMeter.reset!
 ```
 
