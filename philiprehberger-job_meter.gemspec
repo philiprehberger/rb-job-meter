@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors = ['Philip Rehberger']
   spec.email = ['me@philiprehberger.com']
 
-  spec.summary = 'Framework-agnostic background job instrumentation and metrics'
+  spec.summary = 'Framework-agnostic background job instrumentation and metrics for Ruby'
   spec.description = 'Thread-safe instrumentation for background jobs. Record execution ' \
                      'duration and success/failure, compute percentiles (p50, p95, p99), ' \
                      'and identify slowest or most-failing job classes.'
