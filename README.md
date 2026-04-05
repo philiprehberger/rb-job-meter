@@ -60,6 +60,19 @@ Philiprehberger::JobMeter.top_failing(5)
 # => [{ job_class: "SendEmailJob", success_rate: 0.5, ... }, ...]
 ```
 
+### Trending Stats
+
+```ruby
+require "philiprehberger/job_meter"
+
+Philiprehberger::JobMeter.record("SendEmailJob", duration: 0.45, success: true)
+
+trending = Philiprehberger::JobMeter.trending("SendEmailJob")
+trending[:last_1m]   # => { avg_duration: 0.45, success_rate: 1.0, total: 1, failed: 0 }
+trending[:last_5m]   # => { avg_duration: 0.45, success_rate: 1.0, total: 1, failed: 0 }
+trending[:last_15m]  # => { avg_duration: 0.45, success_rate: 1.0, total: 1, failed: 0 }
+```
+
 ### Reset
 
 Clear all recorded metrics from memory. Useful between test runs or when rotating collection windows.
@@ -76,6 +89,7 @@ Philiprehberger::JobMeter.reset!
 | `JobMeter.stats(job_class)` | Return a stats hash for a specific job class, or `nil` if no data recorded |
 | `JobMeter.top_slowest(num = 5)` | Return an array of stats hashes ranked by slowest average duration (descending) |
 | `JobMeter.top_failing(num = 5)` | Return an array of stats hashes ranked by lowest success rate (ascending) |
+| `JobMeter.trending(job_class)` | Returns rolling stats for the last 1m, 5m, and 15m windows |
 | `JobMeter.reset!` | Clear all recorded metrics from memory |
 
 ### Parameters
