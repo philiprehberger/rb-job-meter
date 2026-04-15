@@ -60,6 +60,58 @@ Philiprehberger::JobMeter.top_failing(5)
 # => [{ job_class: "SendEmailJob", success_rate: 0.5, ... }, ...]
 ```
 
+### Tags
+
+Attach arbitrary key-value metadata to each recording, then filter stats by tag values:
+
+```ruby
+Philiprehberger::JobMeter.record("SendEmailJob", duration: 1.2, success: true, tags: { queue: "high", env: "production" })
+Philiprehberger::JobMeter.record("SendEmailJob", duration: 0.8, success: true, tags: { queue: "low", env: "staging" })
+Philiprehberger::JobMeter.record("SendEmailJob", duration: 2.1, success: false, tags: { queue: "high", env: "production" })
+
+# Filter stats to only "high" queue in production
+stats = Philiprehberger::JobMeter.stats("SendEmailJob", tags: { queue: "high", env: "production" })
+# => { avg_duration: 1.65, ..., total: 2, failed: 1 }
+
+# Without tags filter, returns stats for all recordings
+stats = Philiprehberger::JobMeter.stats("SendEmailJob")
+# => { ..., total: 3 }
+```
+
+### Histogram
+
+Bucket durations into configurable ranges and get counts per bucket:
+
+```ruby
+Philiprehberger::JobMeter.histogram("SendEmailJob", buckets: [0.1, 0.5, 1.0, 5.0])
+# => { "0-0.1" => 0, "0.1-0.5" => 0, "0.5-1.0" => 1, "1.0-5.0" => 2, "5.0+" => 0 }
+```
+
+### Prometheus Export
+
+Export all recorded metrics in Prometheus text exposition format:
+
+```ruby
+puts Philiprehberger::JobMeter.to_prometheus
+# # HELP job_duration_seconds Duration of job executions
+# # TYPE job_duration_seconds gauge
+# job_duration_seconds_avg{job_class="SendEmailJob"} 1.3666666666666667
+# job_duration_seconds_p50{job_class="SendEmailJob"} 1.2
+# ...
+# job_executions_total{job_class="SendEmailJob"} 3
+# job_failures_total{job_class="SendEmailJob"} 1
+# job_success_rate{job_class="SendEmailJob"} 0.6666666666666666
+```
+
+### JSON Export
+
+Export all metrics as a JSON string:
+
+```ruby
+json = Philiprehberger::JobMeter.to_json_export
+# => '{"jobs":[{"job_class":"SendEmailJob","stats":{"avg_duration":1.37,...}}]}'
+```
+
 ### Trending Stats
 
 ```ruby
@@ -85,11 +137,14 @@ Philiprehberger::JobMeter.reset!
 
 | Method | Description |
 |--------|-------------|
-| `JobMeter.record(job_class, duration:, success:)` | Record a single job execution |
-| `JobMeter.stats(job_class)` | Return a stats hash for a specific job class, or `nil` if no data recorded |
+| `JobMeter.record(job_class, duration:, success:, tags: {})` | Record a single job execution with optional tags |
+| `JobMeter.stats(job_class, tags: {})` | Return a stats hash, optionally filtered by tags. Returns `nil` if no matching data |
+| `JobMeter.histogram(job_class, buckets:)` | Return a hash mapping bucket ranges to duration counts |
 | `JobMeter.top_slowest(num = 5)` | Return an array of stats hashes ranked by slowest average duration (descending) |
 | `JobMeter.top_failing(num = 5)` | Return an array of stats hashes ranked by lowest success rate (ascending) |
 | `JobMeter.trending(job_class)` | Returns rolling stats for the last 1m, 5m, and 15m windows |
+| `JobMeter.to_prometheus` | Export all metrics in Prometheus text exposition format |
+| `JobMeter.to_json_export` | Export all metrics as a JSON string |
 | `JobMeter.reset!` | Clear all recorded metrics from memory |
 
 ### Parameters
@@ -99,6 +154,8 @@ Philiprehberger::JobMeter.reset!
 | `job_class` | `String` | Identifier for the job class (typically the class name) |
 | `duration` | `Float` | Execution time in seconds |
 | `success` | `Boolean` | Whether the job completed successfully |
+| `tags` | `Hash` | Optional key-value metadata to attach to a recording or filter stats (default: `{}`) |
+| `buckets` | `Array<Float>` | Bucket boundaries for histogram (e.g. `[0.1, 0.5, 1.0, 5.0]`) |
 | `num` | `Integer` | Maximum number of results to return (default: `5`) |
 
 ### Return values

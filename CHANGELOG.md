@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-14
+
+### Added
+- Tags support for `record` and `stats` -- attach arbitrary key-value tags to recordings and filter stats by tag values
+- `JobMeter.histogram(name, buckets:)` -- bucket durations into configurable ranges and return counts per bucket
+- `JobMeter.to_prometheus` -- export all recorded metrics in Prometheus text exposition format
+- `JobMeter.to_json_export` -- export all metrics as a JSON string with job names, stats, and histograms
+
 ## [0.2.1] - 2026-04-08
 
 ### Changed
