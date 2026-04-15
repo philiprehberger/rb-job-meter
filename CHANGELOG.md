@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-15
+
+### Added
+- `JobMeter.measure(job_class, tags:, &block)` -- time a block and auto-record duration and success based on whether it raises; exceptions are re-raised after recording
+- `JobMeter.tag_values(job_class, key)` -- return the unique values seen for a tag key on a job class, useful for building dashboards or driving subsequent filtered queries
+- `JobMeter.clear!(job_class)` -- drop metrics and trending data for a single job class without disturbing others; returns `true` when something was cleared
+
+### Changed
+- Streamline README API section to the standard method/description table and move Usage examples for new features alongside existing ones
+
 ## [0.3.0] - 2026-04-14
 
 ### Added
@@ -91,3 +101,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Percentile tracking (p50, p95, p99)
 - Success/failure rate per job class
 - Top slowest and failing reports
+
+[Unreleased]: https://github.com/philiprehberger/rb-job-meter/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/philiprehberger/rb-job-meter/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/philiprehberger/rb-job-meter/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/philiprehberger/rb-job-meter/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.11...v0.2.0
+[0.1.11]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.10...v0.1.11
+[0.1.10]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.9...v0.1.10
+[0.1.9]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.8...v0.1.9
+[0.1.8]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.7...v0.1.8
+[0.1.7]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.6...v0.1.7
+[0.1.6]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.5...v0.1.6
+[0.1.5]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.4...v0.1.5
+[0.1.4]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.3...v0.1.4
+[0.1.3]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/philiprehberger/rb-job-meter/compare/v0.1.0...v0.1.2
+[0.1.0]: https://github.com/philiprehberger/rb-job-meter/releases/tag/v0.1.0

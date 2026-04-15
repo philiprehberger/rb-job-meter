@@ -553,6 +553,111 @@ RSpec.describe Philiprehberger::JobMeter do
     end
   end
 
+  describe '.measure' do
+    it 'records duration and success for a block that returns normally' do
+      described_class.measure('MeasuredJob') { 1 + 1 }
+
+      result = described_class.stats('MeasuredJob')
+
+      expect(result[:total]).to eq(1)
+      expect(result[:success_rate]).to eq(1.0)
+      expect(result[:avg_duration]).to be >= 0.0
+    end
+
+    it 'returns the block return value' do
+      returned = described_class.measure('Returner') { :ok }
+      expect(returned).to eq(:ok)
+    end
+
+    it 'records failure and re-raises when the block raises' do
+      expect do
+        described_class.measure('Boom') { raise StandardError, 'kaboom' }
+      end.to raise_error(StandardError, 'kaboom')
+
+      result = described_class.stats('Boom')
+
+      expect(result[:total]).to eq(1)
+      expect(result[:failed]).to eq(1)
+      expect(result[:success_rate]).to eq(0.0)
+    end
+
+    it 'forwards tags to the underlying recording' do
+      described_class.measure('TaggedMeasure', tags: { queue: 'high' }) { 42 }
+
+      result = described_class.stats('TaggedMeasure', tags: { queue: 'high' })
+      expect(result[:total]).to eq(1)
+    end
+
+    it 'raises ArgumentError when called without a block' do
+      expect do
+        described_class.measure('NoBlock')
+      end.to raise_error(ArgumentError, /block/)
+    end
+
+    it 'records positive duration for measurable work' do
+      described_class.measure('SleepyJob') { sleep(0.01) }
+
+      result = described_class.stats('SleepyJob')
+      expect(result[:avg_duration]).to be > 0.0
+    end
+  end
+
+  describe '.tag_values' do
+    it 'returns all unique values for a tag key' do
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'high' })
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'low' })
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'high' })
+
+      expect(described_class.tag_values('Job', :queue)).to contain_exactly('high', 'low')
+    end
+
+    it 'returns an empty array when the job class has no recordings' do
+      expect(described_class.tag_values('Missing', :queue)).to eq([])
+    end
+
+    it 'returns an empty array when no recordings carry the key' do
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'high' })
+      expect(described_class.tag_values('Job', :region)).to eq([])
+    end
+
+    it 'ignores recordings that do not have the key' do
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'high' })
+      described_class.record('Job', duration: 1.0, success: true, tags: {})
+      described_class.record('Job', duration: 1.0, success: true, tags: { queue: 'low' })
+
+      expect(described_class.tag_values('Job', :queue)).to contain_exactly('high', 'low')
+    end
+  end
+
+  describe '.clear!' do
+    it 'removes metrics for a single job class' do
+      described_class.record('JobA', duration: 1.0, success: true)
+      described_class.record('JobB', duration: 2.0, success: true)
+
+      described_class.clear!('JobA')
+
+      expect(described_class.stats('JobA')).to be_nil
+      expect(described_class.stats('JobB')[:total]).to eq(1)
+    end
+
+    it 'returns true when a job class was cleared' do
+      described_class.record('JobA', duration: 1.0, success: true)
+      expect(described_class.clear!('JobA')).to be(true)
+    end
+
+    it 'returns false when the job class was unknown' do
+      expect(described_class.clear!('NeverSeen')).to be(false)
+    end
+
+    it 'also clears trending buckets for the job class' do
+      described_class.record('TrendJob', duration: 1.0, success: true)
+      described_class.clear!('TrendJob')
+
+      result = described_class.trending('TrendJob')
+      expect(result[:last_1m][:total]).to eq(0)
+    end
+  end
+
   describe 'many jobs statistics' do
     it 'computes correct stats for a large number of recordings' do
       1000.times do |i|
