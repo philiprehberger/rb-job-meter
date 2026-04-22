@@ -42,6 +42,19 @@ module Philiprehberger
         @mutex.synchronize { @data.keys.dup }
       end
 
+      def tag_values(job_class, key)
+        @mutex.synchronize do
+          entry = @data[job_class]
+          return [] unless entry
+
+          entry[:tags].filter_map { |t| t[key] }.uniq
+        end
+      end
+
+      def clear!(job_class)
+        @mutex.synchronize { !@data.delete(job_class).nil? }
+      end
+
       def reset!
         @mutex.synchronize { @data.clear }
       end

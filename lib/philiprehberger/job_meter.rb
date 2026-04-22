@@ -20,6 +20,33 @@ module Philiprehberger
       (@buckets[job_class] ||= Bucket.new).record(duration: duration, success: success)
     end
 
+    def measure(job_class, tags: {})
+      raise ArgumentError, 'measure requires a block' unless block_given?
+
+      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      success = true
+      begin
+        yield
+      rescue StandardError
+        success = false
+        raise
+      ensure
+        duration = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+        record(job_class, duration: duration, success: success, tags: tags)
+      end
+    end
+
+    def tag_values(job_class, key)
+      @collector.tag_values(job_class, key)
+    end
+
+    def clear!(job_class)
+      cleared = @collector.clear!(job_class)
+      bucket = @buckets.delete(job_class)
+      bucket&.reset!
+      cleared
+    end
+
     def trending(job_class)
       bucket = @buckets[job_class]
       unless bucket
