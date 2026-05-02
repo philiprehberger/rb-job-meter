@@ -95,6 +95,15 @@ Philiprehberger::JobMeter.tag_values("SendEmailJob", :queue)
 # => ["high", "low"]
 ```
 
+### Listing job classes
+
+Enumerate every job class with at least one recorded entry — useful for dashboards that need to iterate without parsing the full export:
+
+```ruby
+Philiprehberger::JobMeter.job_classes
+# => ["SendEmailJob", "ImportCsvJob"]
+```
+
 ### Histogram
 
 Bucket durations into configurable ranges and get counts per bucket:
@@ -160,6 +169,7 @@ Philiprehberger::JobMeter.reset!
 | `JobMeter.stats(job_class, tags: {})` | Return a stats hash, optionally filtered by tags; `nil` if no matching data |
 | `JobMeter.histogram(job_class, buckets:)` | Return a hash mapping bucket ranges to duration counts |
 | `JobMeter.tag_values(job_class, key)` | Return an array of unique values seen for a tag key on a job class |
+| `JobMeter.job_classes` | Return every job class with at least one recorded entry |
 | `JobMeter.top_slowest(num = 5)` | Return stats hashes ranked by slowest average duration (descending) |
 | `JobMeter.top_failing(num = 5)` | Return stats hashes ranked by lowest success rate (ascending) |
 | `JobMeter.trending(job_class)` | Return rolling stats for the last 1m, 5m, and 15m windows |

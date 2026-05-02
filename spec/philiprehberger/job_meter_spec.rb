@@ -629,6 +629,28 @@ RSpec.describe Philiprehberger::JobMeter do
     end
   end
 
+  describe '.job_classes' do
+    it 'returns an empty array when nothing has been recorded' do
+      described_class.reset!
+      expect(described_class.job_classes).to eq([])
+    end
+
+    it 'returns each recorded job class exactly once' do
+      described_class.record('JobA', duration: 1.0, success: true)
+      described_class.record('JobA', duration: 2.0, success: true)
+      described_class.record('JobB', duration: 1.5, success: false)
+
+      expect(described_class.job_classes).to contain_exactly('JobA', 'JobB')
+    end
+
+    it 'reflects classes added after reset!' do
+      described_class.record('JobA', duration: 1.0, success: true)
+      described_class.reset!
+      described_class.record('JobC', duration: 0.5, success: true)
+      expect(described_class.job_classes).to eq(['JobC'])
+    end
+  end
+
   describe '.clear!' do
     it 'removes metrics for a single job class' do
       described_class.record('JobA', duration: 1.0, success: true)

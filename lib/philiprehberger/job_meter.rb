@@ -40,6 +40,16 @@ module Philiprehberger
       @collector.tag_values(job_class, key)
     end
 
+    # Return all job classes with at least one recorded entry.
+    #
+    # Useful for dashboards that need to enumerate registered jobs
+    # without serializing the full Prometheus or JSON export.
+    #
+    # @return [Array] job class identifiers seen by the collector
+    def job_classes
+      @collector.all_job_classes
+    end
+
     def clear!(job_class)
       cleared = @collector.clear!(job_class)
       bucket = @buckets.delete(job_class)
